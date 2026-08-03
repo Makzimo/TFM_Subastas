@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  MARTILLERO
+  POSTOR
+  ADMINISTRATIVO
+}
+
+enum AuctionStatus {
+  PENDIENTE
+  ACTIVO
+  ADJUDICADO
+  DESIERTO
+}
+
+enum ApprovalStatus {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+}
+
+model User {
+  id             String             @id @default(uuid())
+  email          String             @unique
+  name           String?
+  passwordHash   String
+  role           Role               @default(POSTOR)
+  isActive       Boolean            @default(true)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  bids           Bid[]
+  guarantees     BidderGuarantee[]
+  auditLogs      AuditLog[]
+  assets         Asset[]            @relation("MartilleroAssets")
+  approvedAssets Asset[]            @relation("ApprovedAssets")
+}
+
+model Asset {
+  id             String         @id @default(uuid())
+  description    String
+  basePrice      Decimal
+  currentPrice   Decimal
+  status         AuctionStatus  @default(PENDIENTE)
+  approvalStatus ApprovalStatus @default(PENDIENTE)
+  imageUrl       String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  martilleroId   String
+  martillero     User           @relation("MartilleroAssets", fields: [martilleroId], references: [id])
+  approvedById   String?
+  approvedBy     User?          @relation("ApprovedAssets", fields: [approvedById], references: [id])
+  bids           Bid[]
+  guarantees     BidderGuarantee[]
+}
+
+model Bid {
+  id        String   @id @default(uuid())
+  amount    Decimal
+  createdAt DateTime @default(now())
+  isWinning Boolean  @default(false)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  assetId   String
+  asset     Asset    @relation(fields: [assetId], references: [id])
+
+  @@index([assetId, isWinning])
+  @@index([userId, createdAt])
+}
+
+model BidderGuarantee {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  assetId       String?
+  asset         Asset?    @relation(fields: [assetId], references: [id])
+  isPaid        Boolean   @default(false)
+  paymentDate   DateTime?
+  amount        Decimal
+  paymentMethod String?
+  createdAt     DateTime  @default(now())
+
+  @@unique([userId, assetId])
+  @@index([userId, isPaid])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  entityId  String
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([entityId, action])
+  @@index([userId, createdAt])
+}
