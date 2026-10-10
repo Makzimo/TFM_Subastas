@@ -9,6 +9,20 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 
 
+## [0.16.1] - 2026-10-10
+
+### Added
+- **Guía de despliegue en Vercel** (`docs/plan-preproduccion/09-lanzamiento-operaciones/guia-deploy-vercel.md`) — Pasos 0-8 para el primer lanzamiento a producción (GitHub, DB Neon, variables de entorno, migraciones, seed, health/smoke, monitoreo, rollback)
+- **`db:migrate:deploy`** en `package.json` (`prisma migrate deploy`) — migraciones en entornos productivos
+- Incidencias documentadas: `docs/incidencias/2026-10-10-paso3-backup-prod.md` y `docs/incidencias/2026-10-10-uploads-vercel.md`
+
+### Changed
+- `package.json`: `build` ahora es `prisma generate && next build` y se agrega `postinstall: prisma generate` (necesario para Vercel)
+- `.env.example`: documentadas todas las variables requeridas (`DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `AUTH_TRUST_HOST`, `NEXTAUTH_*`, seed)
+
+### Fixed
+- **Bloqueante de producción identificado (subida de imágenes en Vercel)** — `/api/uploads` escribe en `public/uploads`; el filesystem de Vercel es de solo lectura. Documentado en `docs/incidencias/2026-10-10-uploads-vercel.md` (pendiente de decisión: Vercel Blob)
+
 ## [0.16.0] - 2026-10-10
 
 ### Added
