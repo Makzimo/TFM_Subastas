@@ -37,3 +37,7 @@ Thumbs.db
 
 # uploads
 public/uploads/
+
+# screenshots / scripts de captura (artefactos locales)
+screenshots/
+screenshot*.js

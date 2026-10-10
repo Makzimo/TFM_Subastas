@@ -92,51 +92,60 @@ export function BidControls({ assetId, currentPrice }: BidControlsProps) {
   const suggestedBids = QUICK_INCREMENTS.map((inc) => currentPrice + inc);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {state?.success && (
-        <div className="rounded-md bg-green-50 p-3 text-sm text-green-800">
+        <div className="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 text-sm text-emerald-400">
+          <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
           Puja registrada correctamente
         </div>
       )}
       {state?.error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+        <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-400">
+          <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
           {state.error}
         </div>
       )}
 
       {pendingIncrement !== null ? (
-        <div className="space-y-3 rounded-lg border-2 border-green-200 bg-green-50 p-4">
-          <p className="text-sm font-medium text-green-800">
-            Confirmar puja de{" "}
-            <strong>{formatCurrency(pendingAmount)}</strong>
-          </p>
+        <div className="space-y-3 rounded-xl border border-orange-500/20 bg-orange-500/5 p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-neutral-400">Confirmar puja</p>
+            <p className="text-sm font-bold tabular-nums text-white">
+              {formatCurrency(pendingAmount)}
+            </p>
+          </div>
 
-          <div className="h-2 w-full overflow-hidden rounded-full bg-green-200">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-800">
             <div
-              className="h-full rounded-full bg-green-600 transition-all duration-1000 ease-linear"
+              className="h-full rounded-full bg-orange-500 transition-all duration-1000 ease-linear"
               style={{ width: `${(countdown / COUNTDOWN_SECONDS) * 100}%` }}
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
               onClick={cancelPending}
               disabled={isPending}
+              className="flex-1 text-neutral-500 hover:text-white hover:bg-white/5"
             >
-              ✕ Cancelar
+              Cancelar
             </Button>
-            <span className="font-mono text-sm text-green-700">
+            <span className="text-xs tabular-nums text-neutral-500">
               {countdown}s
             </span>
             <Button
               size="sm"
-              className="bg-green-600 hover:bg-green-700"
               disabled={isPending}
               onClick={() => executeBid(pendingAmount)}
+              className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
             >
-              {isPending ? "Pujando..." : "✓ Confirmar"}
+              {isPending ? "Pujando..." : "Confirmar"}
             </Button>
           </div>
         </div>
@@ -149,7 +158,7 @@ export function BidControls({ assetId, currentPrice }: BidControlsProps) {
               size="sm"
               disabled={isPending}
               onClick={() => handleQuickBid(QUICK_INCREMENTS[i])}
-              className="w-full"
+              className="w-full border-neutral-700 text-neutral-300 hover:bg-white/5 hover:text-white hover:border-neutral-600"
             >
               +{formatCurrency(QUICK_INCREMENTS[i])}
             </Button>
@@ -172,9 +181,13 @@ export function BidControls({ assetId, currentPrice }: BidControlsProps) {
             step="1"
             placeholder={`Mínimo ${formatCurrency(currentPrice + 50000)}`}
             required
-            className="flex-1"
+            className="flex-1 border-neutral-700 bg-neutral-800 text-white placeholder:text-neutral-500 focus:border-orange-500 focus:ring-orange-500/20"
           />
-          <Button type="submit" disabled={isPending}>
+          <Button
+            type="submit"
+            disabled={isPending}
+            className="bg-orange-500 hover:bg-orange-600 text-white"
+          >
             {isPending ? "Pujando..." : "Pujar"}
           </Button>
         </form>

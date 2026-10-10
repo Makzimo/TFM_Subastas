@@ -15,23 +15,29 @@ function formatCurrency(amount: number): string {
 
 export function LiveBid({ currentPrice, bidCount }: LiveBidProps) {
   return (
-    <div className="space-y-3 rounded-lg border border-green-200 bg-green-50 p-4">
-      <div className="flex items-center gap-2">
-        <span className="relative flex h-3 w-3">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-          <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500" />
+    <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-pulse rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+          </span>
+          <span className="text-xs font-medium uppercase tracking-wide text-emerald-400">
+            En vivo
+          </span>
+        </div>
+        <span className="text-xs tabular-nums text-neutral-500">
+          {bidCount} {bidCount === 1 ? "puja" : "pujas"}
         </span>
-        <span className="text-sm font-medium text-green-800">En vivo</span>
       </div>
-      <div>
-        <p className="text-sm text-green-700">Precio actual</p>
-        <p className="text-2xl font-bold text-green-900">
+      <div className="mt-3">
+        <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+          Precio actual
+        </p>
+        <p className="mt-1 text-2xl font-bold tabular-nums text-white">
           {formatCurrency(currentPrice)}
         </p>
       </div>
-      <p className="text-sm text-green-700">
-        {bidCount} {bidCount === 1 ? "puja" : "pujas"} realizadas
-      </p>
     </div>
   );
 }

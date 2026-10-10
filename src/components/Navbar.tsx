@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 const ROLE_LABELS: Record<string, string> = {
   ADMINISTRATIVO: "Administrador",
@@ -11,41 +11,124 @@ const ROLE_LABELS: Record<string, string> = {
   POSTOR: "Postor",
 };
 
-const ROLE_BADGE_COLORS: Record<string, string> = {
-  ADMINISTRATIVO: "bg-purple-600 text-purple-100",
-  MARTILLERO: "bg-amber-600 text-amber-100",
-  POSTOR: "bg-sky-600 text-sky-100",
-};
+/* ── Estructura de menú tipo Consensys ── */
+interface NavChild {
+  label: string;
+  href: string;
+  desc?: string;
+}
 
-const ROLE_NAV_LINKS: Record<string, { href: string; label: string }[]> = {
-  ADMINISTRATIVO: [
-    { href: "/admin/dashboard", label: "Dashboard" },
-    { href: "/admin/activos", label: "Lotes" },
-    { href: "/admin/garantias", label: "Garantías" },
-    { href: "/admin/usuarios", label: "Usuarios" },
-    { href: "/admin/martilleros", label: "Martilleros" },
-    { href: "/admin/audit", label: "Auditoría" },
-  ],
-  MARTILLERO: [
-    { href: "/martillero/dashboard", label: "Dashboard" },
-    { href: "/martillero/activos", label: "Mis Lotes" },
-    { href: "/martillero/activos/nuevo", label: "Nuevo Lote" },
-  ],
-  POSTOR: [
-    { href: "/postor/dashboard", label: "Dashboard" },
-    { href: "/postor/garantia", label: "Garantía" },
-  ],
-};
+interface NavItem {
+  label: string;
+  href?: string;
+  children?: NavChild[];
+}
+
+function buildNavItems(role: string): NavItem[] {
+  const base: NavItem[] = [
+    {
+      label: "Remates",
+      children: [
+        { label: "Remates activos", href: "/remates", desc: "Vehículos y especies disponibles" },
+        { label: "Cómo funciona", href: "/#como-funciona", desc: "Tres pasos para adjudicarte" },
+      ],
+    },
+  ];
+
+  if (role === "ADMINISTRATIVO") {
+    base.push({
+      label: "Plataforma",
+      children: [
+        { label: "Dashboard", href: "/admin/dashboard", desc: "Vista general del sistema" },
+        { label: "Lotes", href: "/admin/activos", desc: "Gestionar activos" },
+        { label: "Usuarios", href: "/admin/usuarios", desc: "Administrar usuarios" },
+        { label: "Martilleros", href: "/admin/martilleros", desc: "Gestionar martilleros" },
+        { label: "Garantías", href: "/admin/garantias", desc: "Solicitudes de garantía" },
+        { label: "Auditoría", href: "/admin/audit", desc: "Registro de actividad" },
+      ],
+    });
+  } else if (role === "MARTILLERO") {
+    base.push({
+      label: "Plataforma",
+      children: [
+        { label: "Dashboard", href: "/martillero/dashboard", desc: "Vista general" },
+        { label: "Mis Lotes", href: "/martillero/activos", desc: "Lotes asignados" },
+        { label: "Nuevo Lote", href: "/martillero/activos/nuevo", desc: "Crear un nuevo lote" },
+      ],
+    });
+  } else if (role === "POSTOR") {
+    base.push({
+      label: "Plataforma",
+      children: [
+        { label: "Dashboard", href: "/postor/dashboard", desc: "Mis pujas y actividad" },
+        { label: "Garantía", href: "/postor/garantia", desc: "Gestionar garantías" },
+      ],
+    });
+  }
+
+  return base;
+}
+
+/* ── Iconos SVG ── */
+function ChevronDown({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-3 w-3"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+    </svg>
+  );
+}
+
+function ArrowRight({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-4 w-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-7-7l7 7-7 7" />
+    </svg>
+  );
+}
+
+function SearchIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-4 w-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+    </svg>
+  );
+}
+
+/* ── Hamburger Lines ── */
+function HamburgerLines({ open }: { open: boolean }) {
+  return (
+    <div className="flex h-5 w-5 flex-col items-center justify-center gap-[5px]">
+      <span
+        className={`block h-[2px] w-5 bg-white transition-all duration-300 ${
+          open ? "translate-y-[7px] rotate-45" : ""
+        }`}
+      />
+      <span
+        className={`block h-[2px] w-5 bg-white transition-all duration-300 ${
+          open ? "opacity-0" : ""
+        }`}
+      />
+      <span
+        className={`block h-[2px] w-5 bg-white transition-all duration-300 ${
+          open ? "-translate-y-[7px] -rotate-45" : ""
+        }`}
+      />
+    </div>
+  );
+}
 
 export function Navbar() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const dropdownTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
   useEffect(() => {
     closeMobile();
+    setOpenDropdown(null);
   }, [pathname, closeMobile]);
 
   useEffect(() => {
@@ -54,194 +137,271 @@ export function Navbar() {
     } else {
       document.body.style.overflow = "";
     }
-    return () => {
-      document.body.style.overflow = "";
-    };
+    return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
 
   const isLoggedIn = !!session?.user;
   const user = session?.user;
   const role = user?.role || "";
-  const links = ROLE_NAV_LINKS[role] || [];
+  const navItems = buildNavItems(role);
+
+  const handleDropdownEnter = (label: string) => {
+    if (dropdownTimeout.current) clearTimeout(dropdownTimeout.current);
+    setOpenDropdown(label);
+  };
+
+  const handleDropdownLeave = () => {
+    dropdownTimeout.current = setTimeout(() => setOpenDropdown(null), 120);
+  };
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-900 text-white shadow-lg">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-8">
-            <Link href="/remates" className="text-xl font-bold tracking-tight">
-              Remates TFM
+      {/* ── Header principal ── */}
+      <header className="fixed top-0 left-0 right-0 z-50">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6 lg:px-12">
+
+          {/* ── Left: Pill container (logo + nav) estilo Consensys ── */}
+          <div className="flex items-center rounded-full border border-white/10 p-1 gap-1">
+            {/* Logo — 48x48 circular */}
+            <Link href="/remates" className="flex items-center shrink-0">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-orange-500 text-sm font-bold text-black">
+                R
+              </div>
             </Link>
 
-            <div className="hidden items-center gap-1 md:flex">
-              <Link
-                href="/remates"
-                className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  pathname === "/remates" || pathname.startsWith("/remates/")
-                    ? "bg-slate-700 text-white"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`}
-              >
-                Remates
-              </Link>
-              {isLoggedIn &&
-                links.map((link) => {
-                  const isActive =
-                    pathname === link.href ||
-                    pathname.startsWith(link.href + "/");
-                  return (
+            {/* Desktop nav links — pill-shaped buttons */}
+            <nav className="hidden items-center gap-0.5 lg:flex">
+              {navItems.map((item) => (
+                <div
+                  key={item.label}
+                  className="relative"
+                  onMouseEnter={() => item.children && handleDropdownEnter(item.label)}
+                  onMouseLeave={handleDropdownLeave}
+                >
+                  {item.children ? (
+                    <>
+                      <button
+                        className={`group flex items-center gap-1 rounded-full px-5 h-11 text-sm tracking-[0.28px] transition-colors duration-[650ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                          openDropdown === item.label
+                            ? "text-white"
+                            : "text-white/80 hover:text-white"
+                        }`}
+                        aria-expanded={openDropdown === item.label}
+                      >
+                        <span>{item.label}</span>
+                        <ChevronDown
+                          className={`h-3 w-3 transition-transform duration-200 ${
+                            openDropdown === item.label ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+
+                      {/* Dropdown panel */}
+                      {openDropdown === item.label && (
+                        <div
+                          className="absolute top-full left-0 mt-2 w-80 rounded-2xl border border-white/10 bg-[#1d1d1d] shadow-2xl py-2"
+                          onMouseEnter={() => handleDropdownEnter(item.label)}
+                          onMouseLeave={handleDropdownLeave}
+                        >
+                          {item.children.map((child) => (
+                            <Link
+                              key={child.href}
+                              href={child.href}
+                              className="group flex items-center justify-between px-4 py-3 transition-colors hover:bg-white/5"
+                            >
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-sm font-medium text-white group-hover:text-orange-400 transition-colors">
+                                  {child.label}
+                                </span>
+                                {child.desc && (
+                                  <span className="text-xs text-white/40">{child.desc}</span>
+                                )}
+                              </div>
+                              <ArrowRight className="h-4 w-4 text-white/20 group-hover:text-orange-400 transition-all opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5" />
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
                     <Link
-                      key={link.href}
-                      href={link.href}
-                      className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                        isActive
-                          ? "bg-slate-700 text-white"
-                          : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                      href={item.href ?? "#"}
+                      className={`flex items-center rounded-full px-5 h-11 text-sm tracking-[0.28px] transition-colors duration-[650ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                        pathname === item.href
+                          ? "text-white"
+                          : "text-white/80 hover:text-white"
                       }`}
                     >
-                      {link.label}
+                      {item.label}
                     </Link>
-                  );
-                })}
-            </div>
+                  )}
+                </div>
+              ))}
+            </nav>
           </div>
 
-          <div className="hidden items-center gap-4 md:flex">
+          {/* ── Right: Search + Auth CTA estilo Consensys ── */}
+          <div className="hidden items-center gap-2 lg:flex">
+            {/* Search */}
+            <button
+              className="flex h-12 w-12 items-center justify-center rounded-full text-white/60 transition-colors duration-[650ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:text-white hover:bg-white/5"
+              aria-label="Buscar"
+            >
+              <SearchIcon className="h-4 w-4" />
+            </button>
+
             {isLoggedIn ? (
               <>
-                <div className="text-right">
-                  <p className="text-sm font-medium leading-tight">
-                    {user!.name || user!.email}
-                  </p>
-                  <span
-                    className={`inline-block rounded px-1.5 py-0.5 text-xs font-semibold ${ROLE_BADGE_COLORS[role] || "bg-slate-600 text-slate-200"}`}
-                  >
-                    {ROLE_LABELS[role] || role}
-                  </span>
+                {/* User info */}
+                <div className="flex items-center gap-2 mr-1">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1d1d1d] text-xs font-medium text-white">
+                    {user!.name
+                      ? user!.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+                      : user!.email?.slice(0, 2).toUpperCase() || "U"}
+                  </div>
+                  <div className="hidden xl:block">
+                    <p className="text-xs font-medium text-white leading-tight">{user!.name || user!.email}</p>
+                    <span className="text-[10px] text-white/40">{ROLE_LABELS[role] || role}</span>
+                  </div>
                 </div>
+
+                {/* Logout CTA — pill con icono circular estilo Consensys */}
                 <button
                   onClick={() => signOut({ callbackUrl: "/remates" })}
-                  className="rounded-md border border-slate-500 px-3 py-1.5 text-sm font-medium text-slate-300 transition-colors hover:border-white hover:text-white"
+                  className="group flex items-center gap-1 rounded-full bg-[#1d1d1d] p-1 pl-5 h-14 text-sm tracking-[0.28px] text-white transition-all duration-[400ms] ease-[cubic-bezier(0.455,0.03,0.515,0.955)] hover:bg-[#2a2a2a]"
                 >
-                  Salir
+                  <span>Salir</span>
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#121212] transition-all duration-[400ms] ease-[cubic-bezier(0.455,0.03,0.515,0.955)] group-hover:bg-orange-500">
+                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                  </span>
                 </button>
               </>
             ) : (
               <>
+                {/* Login CTA — pill con icono circular estilo Consensys */}
                 <Link
                   href="/login"
-                  className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-slate-900 transition-colors hover:bg-slate-200"
+                  className="group flex items-center gap-1 rounded-full bg-[#1d1d1d] p-1 pl-5 h-14 text-sm tracking-[0.28px] text-white transition-all duration-[400ms] ease-[cubic-bezier(0.455,0.03,0.515,0.955)] hover:bg-[#2a2a2a]"
                 >
-                  Iniciar Sesión
-                </Link>
-                <Link
-                  href="/register"
-                  className="rounded-md border border-slate-500 px-3 py-1.5 text-sm font-medium text-slate-300 transition-colors hover:border-white hover:text-white"
-                >
-                  Crear Cuenta
+                  <span>Log in</span>
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#121212] transition-all duration-[400ms] ease-[cubic-bezier(0.455,0.03,0.515,0.955)] group-hover:bg-orange-500">
+                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                  </span>
                 </Link>
               </>
             )}
           </div>
 
+          {/* ── Mobile hamburger ── */}
           <button
             type="button"
-            role="button"
-            tabIndex={0}
-            className="rounded-md p-2 text-slate-300 hover:text-white md:hidden"
+            className="flex h-12 w-12 items-center justify-center rounded-full lg:hidden"
             onClick={() => setMobileOpen((prev) => !prev)}
-            onTouchEnd={(e) => { e.preventDefault(); setMobileOpen((prev) => !prev); }}
-            aria-label="Toggle menu"
+            aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
           >
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {mobileOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
+            <HamburgerLines open={mobileOpen} />
           </button>
         </div>
-      </nav>
+      </header>
 
+      {/* ── Mobile menu — fullscreen overlay ── */}
       {mobileOpen && (
         <>
           <div
-            className="fixed inset-0 z-[100] bg-black/50 md:hidden"
+            className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm lg:hidden"
             onClick={closeMobile}
-            style={{ touchAction: "manipulation" }}
-            aria-hidden="true"
           />
-          <div className="fixed top-16 left-0 right-0 z-[110] border-t border-slate-700 bg-slate-900 shadow-xl md:hidden">
-            <div className="space-y-1 px-4 pb-4 pt-2">
-              <Link
-                href="/remates"
-                onClick={closeMobile}
-                className={`block rounded-md px-3 py-2 text-sm font-medium ${
-                  pathname === "/remates" || pathname.startsWith("/remates/")
-                    ? "bg-slate-700 text-white"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`}
-              >
-                Remates
-              </Link>
-              {isLoggedIn &&
-                links.map((link) => {
-                  const isActive =
-                    pathname === link.href ||
-                    pathname.startsWith(link.href + "/");
-                  return (
+          <div className="fixed top-14 left-0 right-0 bottom-0 z-[110] bg-black lg:hidden overflow-y-auto">
+            <div className="px-6 py-6 space-y-2">
+              {/* Nav items */}
+              {navItems.map((item) => (
+                <div key={item.label}>
+                  {item.children ? (
+                    <>
+                      <button
+                        onClick={() => setOpenDropdown(openDropdown === item.label ? null : item.label)}
+                        className="flex w-full items-center justify-between rounded-full px-5 h-12 text-sm tracking-[0.28px] text-white/80 hover:bg-white/5 hover:text-white transition-colors duration-[650ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+                      >
+                        <span>{item.label}</span>
+                        <ChevronDown
+                          className={`h-4 w-4 text-white/40 transition-transform duration-200 ${
+                            openDropdown === item.label ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                      {openDropdown === item.label && (
+                        <div className="ml-5 mt-1 space-y-1 border-l border-white/10 pl-4">
+                          {item.children.map((child) => (
+                            <Link
+                              key={child.href}
+                              href={child.href}
+                              onClick={closeMobile}
+                              className="group flex items-center justify-between rounded-full px-4 py-2.5 text-sm text-white/60 hover:bg-white/5 hover:text-white transition-colors"
+                            >
+                              <span>{child.label}</span>
+                              <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
                     <Link
-                      key={link.href}
-                      href={link.href}
+                      href={item.href ?? "#"}
                       onClick={closeMobile}
-                      className={`block rounded-md px-3 py-2 text-sm font-medium ${
-                        isActive
-                          ? "bg-slate-700 text-white"
-                          : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                      }`}
+                      className="flex items-center rounded-full px-5 h-12 text-sm tracking-[0.28px] text-white/80 hover:bg-white/5 hover:text-white transition-colors duration-[650ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
                     >
-                      {link.label}
+                      {item.label}
                     </Link>
-                  );
-                })}
-              <div className="border-t border-slate-700 pt-3">
-                {isLoggedIn ? (
-                  <>
-                    <p className="px-3 text-sm font-medium">
-                      {user!.name || user!.email}
-                    </p>
-                    <span
-                      className={`ml-3 inline-block rounded px-1.5 py-0.5 text-xs font-semibold ${ROLE_BADGE_COLORS[role] || "bg-slate-600 text-slate-200"}`}
-                    >
-                      {ROLE_LABELS[role] || role}
-                    </span>
-                    <button
-                      onClick={() => signOut({ callbackUrl: "/remates" })}
-                      className="mt-2 block w-full rounded-md border border-slate-500 px-3 py-2 text-left text-sm font-medium text-slate-300 hover:border-white hover:text-white"
-                    >
-                      Cerrar sesión
-                    </button>
-                  </>
-                ) : (
-                  <div className="flex gap-2">
-                    <Link
-                      href="/login"
-                      onClick={closeMobile}
-                      className="rounded-md bg-white px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-200"
-                    >
-                      Iniciar Sesión
-                    </Link>
-                    <Link
-                      href="/register"
-                      onClick={closeMobile}
-                      className="rounded-md border border-slate-500 px-3 py-2 text-sm font-medium text-slate-300 hover:border-white hover:text-white"
-                    >
-                      Crear Cuenta
-                    </Link>
+                  )}
+                </div>
+              ))}
+
+              {/* Divider */}
+              <div className="border-t border-white/10 my-4" />
+
+              {/* Auth section */}
+              {isLoggedIn ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 px-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1d1d1d] text-sm font-medium text-white">
+                      {user!.name
+                        ? user!.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+                        : user!.email?.slice(0, 2).toUpperCase() || "U"}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-white">{user!.name || user!.email}</p>
+                      <span className="text-xs text-white/40">{ROLE_LABELS[role] || role}</span>
+                    </div>
                   </div>
-                )}
-              </div>
+                  <button
+                    onClick={() => signOut({ callbackUrl: "/remates" })}
+                    className="flex w-full items-center justify-center gap-2 rounded-full bg-[#1d1d1d] px-5 py-3 text-sm tracking-[0.28px] text-white hover:bg-[#2a2a2a] transition-colors duration-[400ms] ease-[cubic-bezier(0.455,0.03,0.515,0.955)]"
+                  >
+                    <span>Cerrar sesión</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3 px-4">
+                  <Link
+                    href="/login"
+                    onClick={closeMobile}
+                    className="flex w-full items-center justify-center gap-2 rounded-full bg-[#1d1d1d] px-5 py-3 text-sm tracking-[0.28px] text-white hover:bg-[#2a2a2a] transition-colors duration-[400ms] ease-[cubic-bezier(0.455,0.03,0.515,0.955)]"
+                  >
+                    <span>Log in</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={closeMobile}
+                    className="flex w-full items-center justify-center gap-2 rounded-full bg-orange-500 px-5 py-3 text-sm font-medium text-white hover:bg-orange-600 transition-colors"
+                  >
+                    <span>Crear cuenta</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </>

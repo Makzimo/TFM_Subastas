@@ -7,6 +7,68 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 > **Regla de orden:** Las versiones se listan en **orden cronológico inverso** (la más nueva siempre arriba). Al agregar una nueva versión, insertarla **después del encabezado y antes de la versión anterior**.
 
+
+
+## [0.16.0] - 2026-10-10
+
+### Added
+- **Endpoint `GET /api/health`** (`src/app/api/health/route.ts`) — Healthcheck combinado (app + ping a la DB con `SELECT 1`). Responde `200` con `{ status, version, checks:{db}, latencyMs, ts }` o `503` si la DB falla. `force-dynamic` (sin cache), `runtime = "nodejs"`. No expone detalles internos (el error solo se registra en logs del servidor). Requerido por el runbook de lanzamiento (Paso 7) y el monitoreo/alertas
+- **`/api/health` en `publicPaths`** de `middleware.ts` — el healthcheck es accesible sin sesión (antes el matcher lo redirigía a `/login`)
+
+### Security
+- **Parche de vulnerabilidad SSRF en Next.js** — `next` 16.3.6 → **16.4.0** (mínimo parcheado `>=16.3.8`). Corrige GHSA-cjq9-62q9-8jv4 (*Server-Side Request Forgery en Image Optimization*). Este HIGH era de **runtime de producción**, por lo que invalidaba la excepción SCA anterior (que asumía solo dev tooling). Tras el parche, `pnpm audit --audit-level=high` queda sin HIGH de runtime (solo 3 HIGH de dev tooling: `prisma` CLI y `eslint-config-next`)
+
+### Changed
+- **Consolidación del rediseño UI (dark theme estilo Consensys)** — Layouts por rol (`admin/`, `martillero/`, `postor/`, `remates/`, `(public)/`), nuevos componentes `AdminSidebar`, `MartilleroSidebar`, `PostorNav`, `Footer` y primitivos de UI (`PageHeader`, `StatCard`, `DataTable`, `Skeleton`). Estados de carga (`loading.tsx`) por sección
+- `package.json`: versión `0.1.0` → `0.16.0` (alineada con SemVer/CHANGELOG)
+
+### Docs
+- **Plan de preproducción** completo en `docs/plan-preproduccion/` (11 áreas + anexos) y registro de incidencias en `docs/incidencias/`
+- `AGENTS.md` actualizado (regla de serialización RSC + análisis de impacto obligatorio)
+
+## [0.15.5] - 2026-09-24
+
+### Fixed
+- **Postor ahora usa el Navbar principal Consensys** — `src/app/postor/layout.tsx` reemplazado `PostorDesktopNav` por el componente `Navbar` principal. El postor ahora tiene el mismo pill container, CTA con icono circular y transiciones que admin/martillero
+- **Postor dashboard con dark theme** — Eliminados `bg-white` hardcodeados en tarjetas de garantía, empty states y historial de pujas. Reemplazados por `bg-neutral-900/50 border-neutral-800`. Links de color `text-orange-600` → `text-orange-400` para mejor contraste en dark theme
+
+### Changed
+- **`src/app/postor/layout.tsx`** — Usa `Navbar` en lugar de `PostorDesktopNav`, mantiene `PostorNav` (bottom mobile nav) como complemento
+- **`src/app/postor/dashboard/page.tsx`** — Cards, empty states y bid items con colores dark theme consistentes
+
+
+## [0.15.4] - 2026-09-24
+
+### Changed
+- **Navbar refinado visualmente para coincidir exactamente con Consensys.io** — Nuevo pill container (`borderRadius: 32px`, `border: 1px solid rgba(255,255,255,0.1)`, `padding: 4px`) que envuelve logo + nav links como grupo unificado. CTA con icono circular (48x48 `bg-[#121212]` dentro de pill `bg-[#1d1d1d]`). Transiciones cubic-bezier: `0.16,1,0.3,1` (650ms) para menú items, `0.455,0.03,0.515,0.955` (400ms) para CTA icon. Typography: `text-sm tracking-[0.28px]`
+
+
+## [0.15.3] - 2026-09-24
+
+### Changed
+- **Navbar refinado estilo Consensys.io** — Botones de menú con border-radius: 24px (pill shape), fondo transparente por defecto. CTA dark gray rgb(29,29,29) con border-radius: 32px. Header transparente sobre el contenido. Logo 48x48 circular. Font size 13.3333px para items de menú. Dropdown panel con bg #1d1d1d y bordes white/10
+
+
+## [0.15.2] - 2026-09-24
+
+### Changed
+- **Navbar refactorizado estilo Consensys.io** — Layout reestructurado: logo circular naranja (48px) a la izquierda, nav links como dropdown triggers con chevron, CTA "Log in/Salir" con ícono de flecha derecha. Fondo sólido negro (eliminado glassmorphism). Menú móvil con 3 líneas hamburger (animación X al abrir). Dropdown panels con descripciones y flecha de hover
+
+### Fixed
+- **Loading states dark theme** — Skeletons y loading pages actualizados de `bg-gray-200` (light) a `bg-neutral-800` (dark)
+
+## [0.15.1] - 2026-09-24
+
+### Fixed
+- **Loading states dark theme** — Skeletons y loading pages actualizados de `bg-gray-200` (light) a `bg-neutral-800` (dark). Skeleton containers ahora usan `border-neutral-800 bg-neutral-900/50` para consistencia con el resto de la UI
+
+### Changed
+- **`src/components/ui/skeleton.tsx`** — Skeleton base `bg-neutral-800`, contenedores `border-neutral-800 bg-neutral-900/50`
+- **`src/app/remates/loading.tsx`** — Pulse bars `bg-neutral-800`
+- **`src/app/admin/dashboard/loading.tsx`** — Pulse bars `bg-neutral-800`
+- **`src/app/postor/dashboard/loading.tsx`** — Pulse bars `bg-neutral-800`
+- **`src/app/martillero/dashboard/loading.tsx`** — Pulse bars `bg-neutral-800`
+
 ## [0.12.3] - 2026-08-03
 
 ### Fixed

@@ -95,8 +95,21 @@ export function BidHistoryList({
 }) {
   if (bids.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed p-4 text-center">
-        <p className="text-sm text-muted-foreground">
+      <div className="rounded-xl border border-dashed border-neutral-800 bg-neutral-900/30 p-6 text-center">
+        <svg
+          className="mx-auto h-8 w-8 text-neutral-600"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <p className="mt-2 text-sm text-neutral-500">
           Esperando primeras pujas...
         </p>
       </div>
@@ -104,46 +117,51 @@ export function BidHistoryList({
   }
 
   return (
-    <div className="space-y-2">
-      {bids.map((bid, index) => (
-        <div
-          key={bid.id}
-          className={`flex items-center justify-between rounded-lg border p-3 transition-colors ${
-            bid.id === newBidId
-              ? "border-green-300 bg-green-50"
-              : index === 0
-                ? "border-green-200 bg-green-50/50"
-                : ""
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <span
-              className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                index === 0
-                  ? "bg-green-600 text-white"
-                  : "bg-slate-200 text-slate-600"
-              }`}
-            >
-              {index + 1}
-            </span>
-            <div>
-              <p className="text-sm font-medium">
-                {bid.user.name || bid.user.email}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {timeAgo(bid.createdAt)}
-              </p>
-            </div>
-          </div>
-          <span
-            className={`text-sm font-bold ${
-              index === 0 ? "text-green-600" : "text-slate-700"
+    <div className="space-y-1.5">
+      {bids.map((bid, index) => {
+        const isWinner = index === 0;
+        const isNew = bid.id === newBidId;
+
+        return (
+          <div
+            key={bid.id}
+            className={`flex items-center justify-between rounded-lg border px-3 py-2.5 transition-colors ${
+              isNew
+                ? "border-orange-500/30 bg-orange-500/5"
+                : isWinner
+                  ? "border-neutral-700 bg-neutral-800/50"
+                  : "border-transparent"
             }`}
           >
-            {formatCurrency(bid.amount)}
-          </span>
-        </div>
-      ))}
+            <div className="flex items-center gap-3">
+              <span
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums ${
+                  isWinner
+                    ? "bg-orange-500 text-white"
+                    : "bg-neutral-800 text-neutral-500"
+                }`}
+              >
+                {index + 1}
+              </span>
+              <div className="min-w-0">
+                <p
+                  className={`truncate text-sm ${isWinner ? "font-semibold text-white" : "text-neutral-400"}`}
+                >
+                  {bid.user.name || bid.user.email}
+                </p>
+                <p className="text-xs text-neutral-600">
+                  {timeAgo(bid.createdAt)}
+                </p>
+              </div>
+            </div>
+            <span
+              className={`shrink-0 text-sm tabular-nums ${isWinner ? "font-bold text-white" : "font-medium text-neutral-500"}`}
+            >
+              {formatCurrency(bid.amount)}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }

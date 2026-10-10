@@ -1,14 +1,9 @@
 import { getPostorStats } from "@/lib/stats";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { StatCard } from "@/components/ui/stat-card";
+import { PageHeader } from "@/components/ui/page-header";
 import { GuaranteeStatus } from "@/components/GuaranteeStatus";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -39,60 +34,49 @@ export default async function PostorDashboardPage() {
   const stats = await getPostorStats(session.user.id);
 
   return (
-    <main className="min-h-screen p-8">
-      <div className="mx-auto max-w-6xl">
-        <h1 className="mb-2 text-3xl font-bold tracking-tight">
-          Mi Panel
-        </h1>
-        <p className="mb-8 text-muted-foreground">
-          Historial de participaciones y pujas
-        </p>
+    <div className="space-y-8">
+      <PageHeader
+        title="Mi Panel"
+        description="Historial de participaciones y pujas"
+      />
 
-        <div className="mb-8 grid gap-4 sm:grid-cols-3">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Mis Pujas</CardDescription>
-              <CardTitle className="text-2xl">{stats.myBids}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Pujas Ganadoras</CardDescription>
-              <CardTitle className="text-2xl">{stats.winningBids}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Garantía</CardDescription>
-              <CardTitle>
-                <GuaranteeStatus
-                  isPaid={stats.myGuarantee?.isPaid ?? null}
-                />
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Link
-                href="/postor/garantia"
-                className="text-xs text-primary hover:underline"
-              >
-                Gestionar garantía →
-              </Link>
-            </CardContent>
-          </Card>
+      <section>
+        <h2 className="text-lg font-semibold mb-4 text-white">Resumen</h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard
+            title="Mis Pujas"
+            value={stats.myBids}
+            description="Pujas realizadas"
+          />
+          <StatCard
+            title="Pujas Ganadoras"
+            value={stats.winningBids}
+            description="Lotes que estoy ganando"
+          />
+          <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-6">
+            <p className="text-sm font-medium text-neutral-400 mb-2">Garantía</p>
+            <GuaranteeStatus isPaid={stats.myGuarantee?.isPaid ?? null} />
+            <Link
+              href="/postor/garantia"
+              className="inline-block mt-3 text-xs text-orange-400 hover:text-orange-300 font-medium"
+            >
+              Gestionar garantía →
+            </Link>
+          </div>
         </div>
+      </section>
 
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold">Historial de Pujas</h2>
-        </div>
+      <section>
+        <h2 className="text-lg font-semibold mb-4 text-white">Historial de Pujas</h2>
 
         {stats.recentBids.length === 0 ? (
-          <div className="rounded-lg border p-8 text-center">
-            <p className="text-muted-foreground">
+          <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-8 text-center">
+            <p className="text-neutral-400">
               Aún no has realizado ninguna puja.
             </p>
             <Link
               href="/remates"
-              className="mt-4 inline-block text-sm text-primary hover:underline"
+              className="mt-4 inline-block text-sm text-orange-400 hover:text-orange-300 font-medium"
             >
               Explorar remates →
             </Link>
@@ -101,23 +85,23 @@ export default async function PostorDashboardPage() {
           <div className="space-y-3">
             {stats.recentBids.map((bid) => (
               <Link key={bid.id} href={`/remates/${bid.assetId}`}>
-                <div className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
+                <div className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900/50 p-4 transition-colors hover:bg-neutral-800/50">
                   <div>
-                    <p className="font-medium">{bid.asset.description}</p>
-                    <div className="flex items-center gap-2">
+                    <p className="font-medium text-white">{bid.asset.description}</p>
+                    <div className="flex items-center gap-2 mt-1">
                       <Badge variant="outline" className="text-xs">
                         {STATUS_LABELS[bid.asset.status] ?? bid.asset.status}
                       </Badge>
                       {bid.isWinning && (
-                        <Badge className="text-xs">Ganando</Badge>
+                        <Badge className="text-xs bg-orange-500">Ganando</Badge>
                       )}
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold">
+                    <p className="font-bold text-white">
                       {formatCurrency(Number(bid.amount))}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-neutral-500">
                       {new Date(bid.createdAt).toLocaleString("es-CL")}
                     </p>
                   </div>
@@ -126,7 +110,7 @@ export default async function PostorDashboardPage() {
             ))}
           </div>
         )}
-      </div>
-    </main>
+      </section>
+    </div>
   );
 }

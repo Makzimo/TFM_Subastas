@@ -1,8 +1,10 @@
 import { getAdminStats, getRecentAssets } from "@/lib/stats";
-import { StatCard } from "@/components/Filters";
+import { StatCard } from "@/components/ui/stat-card";
+import { PageHeader } from "@/components/ui/page-header";
 import { AssetCard } from "@/components/AssetCard";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -28,49 +30,67 @@ export default async function AdminDashboardPage() {
   ]);
 
   return (
-    <main className="min-h-screen p-8">
-      <div className="mx-auto max-w-6xl">
-        <h1 className="mb-2 text-3xl font-bold tracking-tight">
-          Panel de Administración
-        </h1>
-        <p className="mb-8 text-muted-foreground">
-          Vista general de la plataforma
-        </p>
+    <div className="space-y-8">
+      <PageHeader
+        title="Panel de Administración"
+        description="Vista general de la plataforma de remates"
+      />
 
-        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <StatCard title="Total de Lotes" value={stats.totalAssets} />
-          <StatCard title="En Subasta (Activo)" value={stats.activeAssets} />
-          <StatCard title="Total Pujas" value={stats.totalBids} />
+      <section>
+        <h2 className="text-lg font-semibold mb-4">Resumen</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <StatCard
+            title="Total de Lotes"
+            value={stats.totalAssets}
+            description="Todos los lotes creados"
+          />
+          <StatCard
+            title="En Subasta"
+            value={stats.activeAssets}
+            description="Lotes con remate activo"
+          />
+          <StatCard
+            title="Total Pujas"
+            value={stats.totalBids}
+            description="Pujas realizadas en total"
+          />
           <StatCard
             title="Puja Más Alta"
             value={formatCurrency(stats.highestBid)}
+            description="Mayor puja registrada"
           />
-          <StatCard title="Usuarios" value={stats.totalUsers} />
+          <StatCard
+            title="Usuarios"
+            value={stats.totalUsers}
+            description="Usuarios registrados"
+          />
           <StatCard
             title="Garantías Pendientes"
             value={stats.pendingGuarantees}
             description="Postores esperando verificación"
           />
         </div>
+      </section>
 
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Lotes Recientes</h2>
-          <a
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Lotes Recientes</h2>
+          <Link
             href="/admin/activos"
-            className="text-sm text-primary hover:underline"
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
           >
             Ver todos →
-          </a>
+          </Link>
         </div>
 
         {recentAssets.length === 0 ? (
-          <div className="rounded-lg border p-8 text-center">
+          <div className="rounded-xl border bg-white p-8 text-center">
             <p className="text-muted-foreground">
               No hay lotes creados aún.
             </p>
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {recentAssets.map((asset) => (
               <AssetCard
                 key={asset.id}
@@ -81,11 +101,13 @@ export default async function AdminDashboardPage() {
                 status={asset.status}
                 imageUrl={asset.imageUrl}
                 bidCount={asset._count.bids}
+                martilleroName={asset.martillero?.name ?? asset.martillero?.email}
+                href={`/admin/activos/${asset.id}`}
               />
             ))}
           </div>
         )}
-      </div>
-    </main>
+      </section>
+    </div>
   );
 }

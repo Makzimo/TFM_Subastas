@@ -8,6 +8,7 @@ const publicPaths = [
   "/register",
   "/api/auth",
   "/api/sse",
+  "/api/health",
   "/remates",
 ];
 
