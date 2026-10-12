@@ -3,10 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
@@ -17,19 +15,26 @@ export default function LoginPage() {
 
     const formData = new FormData(e.currentTarget);
 
-    const result = await signIn("credentials", {
-      email: formData.get("email"),
-      password: formData.get("password"),
-      redirect: false,
-    });
+    try {
+      const result = await signIn("credentials", {
+        email: formData.get("email"),
+        password: formData.get("password"),
+        redirect: false,
+      });
 
-    if (result?.error) {
-      setError("Credenciales inválidas");
+      if (result?.error) {
+        setError("Credenciales inválidas. Verifica tu email y contraseña.");
+        return;
+      }
+
+      // Navegación completa: garantiza que la cookie recién creada viaje al
+      // servidor, evitando que el middleware redirija de vuelta a /login.
+      window.location.assign(result?.url ?? "/dashboard");
+    } catch {
+      setError("No se pudo iniciar sesión. Intenta de nuevo.");
+    } finally {
       setIsPending(false);
-      return;
     }
-
-    router.push("/dashboard");
   }
 
   return (

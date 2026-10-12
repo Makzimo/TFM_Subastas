@@ -15,6 +15,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - **Incidencia de primer despliegue** (`docs/incidencias/2026-10-12-first-deploy-db-empty.md`) — BD vacía en producción (`P2021 TableDoesNotExist`), obstáculo de variables *Sensitive* en Vercel y bug de Prisma Console (SSO), y la solución adoptada (migración + seed desde el Build Command de Vercel)
 
 ### Fixed
+- **Login en producción sin retroalimentación** (`src/app/(auth)/login/page.tsx`) — `handleSubmit` no estaba envuelto en `try/catch`: si `signIn` rechazaba, la promesa se tragaba, `isPending` quedaba en `true` y **no se mostraba ningún mensaje** (botón sin cambio, sin error, sin redirección). Ahora se captura la excepción, se restaura el estado en `finally` y se muestra el error real. Además se reemplazó `router.push("/dashboard")` por `window.location.assign(...)` para que la cookie recién creada viaje al servidor y el middleware no redirija de vuelta a `/login` (carrera de cookie)
 - **`.gitignore`**: la línea `.env*` agregada por `vercel link` anulaba el negativo `!.env.example` (la última regla que coincide gana), lo que podía dejar de trackear esa plantilla. Se reemplazó por `.vercel/`; `.env.*` sigue cubriendo los archivos con secretos (`.env.production.local`, `.env.prod`)
 
 ### Changed
