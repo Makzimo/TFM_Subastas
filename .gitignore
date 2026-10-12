@@ -45,3 +45,6 @@ screenshot*.js
 # vercel cli
 .vercel/
 
+# playwright-cli (artefactos de inspección)
+.playwright-cli/
+
