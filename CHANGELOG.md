@@ -9,6 +9,17 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 
 
+## [0.16.2] - 2026-10-12
+
+### Added
+- **Incidencia de primer despliegue** (`docs/incidencias/2026-10-12-first-deploy-db-empty.md`) — BD vacía en producción (`P2021 TableDoesNotExist`), obstáculo de variables *Sensitive* en Vercel y bug de Prisma Console (SSO), y la solución adoptada (migración + seed desde el Build Command de Vercel)
+
+### Fixed
+- **`.gitignore`**: la línea `.env*` agregada por `vercel link` anulaba el negativo `!.env.example` (la última regla que coincide gana), lo que podía dejar de trackear esa plantilla. Se reemplazó por `.vercel/`; `.env.*` sigue cubriendo los archivos con secretos (`.env.production.local`, `.env.prod`)
+
+### Changed
+- **Primer despliegue a producción** en Vercel + Prisma Postgres (`https://tfm-subastas.vercel.app`), con `GET /api/health` en verde. Migración `20261010183233_init` y seed de usuarios aplicados vía Build Command (temporal). Pendiente: revertir el Build Command a su valor por defecto
+
 ## [0.16.1] - 2026-10-10
 
 ### Added

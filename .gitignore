@@ -41,3 +41,7 @@ public/uploads/
 # screenshots / scripts de captura (artefactos locales)
 screenshots/
 screenshot*.js
+
+# vercel cli
+.vercel/
+
