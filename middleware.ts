@@ -28,9 +28,14 @@ export async function middleware(request: NextRequest) {
   // NextAuth v5 crea la sesión con AUTH_SECRET. Si se resolviera solo con
   // NEXTAUTH_SECRET y ambas difieren, getToken() no descifraría la cookie y
   // redirigiría a /login teniendo la sesión válida.
+  //
+  // secureCookie: en HTTPS (producción/Vercel) NextAuth guarda la cookie como
+  // `__Secure-authjs.session-token`; si no se informa, getToken() busca
+  // `authjs.session-token` y devuelve null → redirect a /login pese a sesión válida.
   const token = await getToken({
     req: request,
     secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+    secureCookie: request.nextUrl.protocol === "https:",
   });
 
   if (!token) {

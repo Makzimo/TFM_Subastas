@@ -9,6 +9,15 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 
 
+## [0.16.3] - 2026-10-12
+
+### Fixed
+- **Causa raíz real de la sesión rechazada en producción** (`middleware.ts`) — el diagnóstico de 0.16.2 (`AUTH_SECRET ?? NEXTAUTH_SECRET`) era **insuficiente**: el problema no era el secreto sino el **nombre de la cookie**. `getToken()` de `@auth/core` resuelve `cookieName = defaultCookies(secureCookie ?? false).sessionToken.name`; al no informar `secureCookie`, buscaba **`authjs.session-token`**, mientras que en HTTPS NextAuth crea **`__Secure-authjs.session-token`** (`defaultCookies(true)` agrega el prefijo `__Secure-`). Resultado: `token` era siempre `null` → redirect a `/login` con sesión válida, **solo en producción** (en local, HTTP, el nombre no-secure coincidía). Ahora se deriva `secureCookie: request.nextUrl.protocol === "https:"`. Verificado con navegador real en `https://tfm-subastas.vercel.app`
+
+### Changed
+- **`vercel.json` (nuevo)** — fija `"buildCommand": "pnpm build"`, revirtiendo el override temporal `pnpm db:migrate:deploy && pnpm db:seed && pnpm build` usado para la primera migración y seed. El fichero versiona la config y tiene precedencia sobre Project Settings, garantizando que migrate/seed **no corran en cada deploy**
+- `package.json`: versión `0.16.2` → `0.16.3`
+
 ## [0.16.2] - 2026-10-12
 
 ### Added
