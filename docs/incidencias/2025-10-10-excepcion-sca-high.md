@@ -32,3 +32,33 @@ Riesgo aceptable temporalmente para tooling dev. Los gates funcionales pasan. Bl
 - `pnpm build`: OK (Next 16.4.0)
 - `pnpm prisma validate`: OK
 - `pnpm audit --audit-level=high`: 3 HIGH (dev-only), 0 Critical, 0 HIGH runtime
+
+---
+
+## Re-verificación (2026-10-12, v0.16.4)
+
+Se repitió la auditoría tras el despliegue a producción y tras añadir `@vercel/blob`.
+
+- `pnpm audit`: **7 hallazgos = 0 Critical · 3 HIGH · 4 moderate**, todos bajo `prisma` (devDependency) o `eslint-config-next`:
+
+| Severidad | Paquete | Cadena | Parche |
+|---|---|---|---|
+| high | `braces` | `eslint-config-next` → `@next/eslint-plugin-next` → `fast-glob` → `micromatch` | **sin parche** (`<0.0.0`) |
+| high | `deepmerge-ts` | `prisma` → `@prisma/config` | `>=8.0.0` |
+| high | `mysql2` | `prisma` | `>=3.22.0` |
+| moderate | `mysql2` | `prisma` | `>=3.23.1` |
+| moderate | `@hono/node-server` ×2 | `prisma` → `@prisma/dev` | `>=1.19.13` / `>=1.19.15` |
+| moderate | `valibot` | `prisma` → `@prisma/dev` | `>=1.4.2` |
+
+### Evidencia de que no alcanzan el runtime
+Análisis del bundle de producción generado por `pnpm build` (`.next/server`, 17 MB):
+
+- `mysql2`, `deepmerge-ts`, `@hono/node-server` y `valibot`: **cero referencias** en `.next/server`.
+- `micromatch`: una única aparición, y es un **string de datos** (el `package.json` vendorizado de un paquete), no un `require`/`import` ejecutable.
+- `prisma` y `eslint-config-next` son `devDependencies`; el runtime de producción solo incluye `@prisma/client` + `@prisma/adapter-pg` (driver PostgreSQL) y `pg`.
+
+### Por qué no se aplican `pnpm overrides`
+- `braces` **no tiene versión parcheada** publicada, por lo que ningún override lo resuelve.
+- `mysql2`/`deepmerge-ts`/`@hono/node-server`/`valibot` pertenecen al **CLI** de Prisma, que no se ejecuta en el servidor Next.js. Forzar un major (`deepmerge-ts` 8.x) en el árbol del CLI arriesga romper `prisma migrate` sin aportar seguridad al runtime. Se prefiere la excepción documentada y revisable.
+
+**Conclusión:** la excepción vigente se mantiene. **0 vulnerabilidades de runtime.**

@@ -69,6 +69,7 @@ export default function LoginPage() {
             name="email"
             type="email"
             required
+            autoComplete="email"
             className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             placeholder="admin@remates.cl"
           />
@@ -86,6 +87,7 @@ export default function LoginPage() {
             name="password"
             type="password"
             required
+            autoComplete="current-password"
             className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             placeholder="••••••••"
           />

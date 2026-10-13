@@ -48,3 +48,7 @@ screenshot*.js
 # playwright-cli (artefactos de inspección)
 .playwright-cli/
 
+# NOTA: no añadir `.env*` aquí. El bloque "# env" de arriba ya cubre los
+# archivos con secretos y protege explícitamente `!.env.example`. Una regla
+# `.env*` posterior volvería a ignorar esa plantilla (la última regla que
+# coincide gana). La CLI de Vercel la re-agrega al hacer `vercel link`; revertir.

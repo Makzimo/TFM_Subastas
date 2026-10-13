@@ -9,6 +9,23 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 
 
+## [0.16.5] - 2026-10-12
+
+### Added
+- **Almacenamiento de imágenes en Vercel Blob** — nuevo `src/lib/uploads.ts` con `storeUpload()`, que envía los archivos a Vercel Blob (`put()`, `access: "public"`, clave única `activos/<ISO8601>-<random>.<ext>`, `allowOverwrite: false`) cuando existe `BLOB_READ_WRITE_TOKEN`, y recurre a `public/uploads` en desarrollo local. Resuelve el bloqueante de producción: el filesystem de Vercel es de solo lectura, por lo que `/api/uploads` fallaba al escribir (`docs/incidencias/2026-10-10-uploads-vercel.md`)
+- Dependencia `@vercel/blob@2.8.1`
+- **Store de Blob `remates-activos`** provisionado (región `iad1`) y `BLOB_READ_WRITE_TOKEN` configurada en *Production*, *Preview* y *Development*
+
+### Fixed
+- **`.gitignore` regresado por la CLI de Vercel** — `vercel link` vuelve a añadir `.env*` al final del fichero; como la última regla que coincide gana, anulaba el `!.env.example` (mismo bug ya corregido en 0.16.2). Se elimina la línea y se documenta por qué no debe re-añadirse
+- **`/api/uploads` sin tipado estricto** (`src/app/api/uploads/route.ts`) — `formData.get("file") as File | null` forzaba el cast y no distinguía tipos inesperados. Ahora usa `instanceof File`, la allow-list de MIME es `as const`, y el error se registra con `console.error` en lugar de tragarse
+
+### Changed
+- `next.config.ts`: `images.remotePatterns` acepta `**.public.blob.vercel-storage.com` (necesario porque `AssetCard` renderiza con `next/image`)
+- **Accesibilidad**: `autoComplete` en los formularios de acceso — `email`/`current-password` en login y `name`/`email`/`new-password` en register (elimina el aviso de Chrome *"Input elements should have autocomplete attributes"*)
+- `.env.example`: documentada `BLOB_READ_WRITE_TOKEN` y corregida la referencia del proveedor de BD (Neon → Prisma Postgres)
+- **Re-verificación SCA** (`docs/incidencias/2025-10-10-excepcion-sca-high.md`): 7 hallazgos (3 HIGH · 4 moderate), **todos** bajo `prisma` (devDependency) o `eslint-config-next`. Se añade evidencia de que ninguno entra en el bundle de producción (análisis de `.next/server`) y la justificación de por qué no se aplican `pnpm overrides`
+
 ## [0.16.4] - 2026-10-12
 
 ### Fixed

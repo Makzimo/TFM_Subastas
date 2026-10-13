@@ -42,6 +42,7 @@ export default function RegisterPage() {
             id="name"
             name="name"
             type="text"
+            autoComplete="name"
             className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             placeholder="Tu nombre"
           />
@@ -56,6 +57,7 @@ export default function RegisterPage() {
             name="email"
             type="email"
             required
+            autoComplete="email"
             className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             placeholder="tu@email.cl"
           />
@@ -74,6 +76,7 @@ export default function RegisterPage() {
             type="password"
             required
             minLength={6}
+            autoComplete="new-password"
             className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             placeholder="Mínimo 6 caracteres"
           />
