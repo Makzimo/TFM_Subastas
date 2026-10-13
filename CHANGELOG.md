@@ -9,6 +9,11 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 
 
+## [0.16.4] - 2026-10-12
+
+### Fixed
+- **Login en producción se quedaba en `/login` pese a sesión válida** (`src/app/(auth)/login/page.tsx`) — segunda causa del mismo síntoma. Con `signIn("credentials", { redirect: false })`, next-auth devuelve en `result.url` **el `callbackUrl` recibido**; como no se le pasaba ninguno, ese valor era la página actual (`/login`), y `window.location.assign(result?.url ?? "/dashboard")` se recargaba en `/login` sin salir. Ahora se navega explícitamente a `/dashboard` (que ya enruta por rol). Verificado en producción: login con `test.probe@remates.cl` → `/dashboard` → `/postor/dashboard` renderiza el panel del postor
+
 ## [0.16.3] - 2026-10-12
 
 ### Fixed

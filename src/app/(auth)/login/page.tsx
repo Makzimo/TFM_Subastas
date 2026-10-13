@@ -27,9 +27,13 @@ export default function LoginPage() {
         return;
       }
 
-      // Navegación completa: garantiza que la cookie recién creada viaje al
-      // servidor, evitando que el middleware redirija de vuelta a /login.
-      window.location.assign(result?.url ?? "/dashboard");
+      // Navegación completa (no router.push) para que la cookie recién creada
+      // viaje al servidor y el middleware no la descarte en el primer render.
+      //
+      // NO usar result.url: con `redirect: false`, next-auth devuelve como url
+      // el callbackUrl recibido —que por defecto es la página actual, /login—
+      // por lo que assign(result.url) se recargaba en /login sin salir.
+      window.location.assign("/dashboard");
     } catch {
       setError("No se pudo iniciar sesión. Intenta de nuevo.");
     } finally {
