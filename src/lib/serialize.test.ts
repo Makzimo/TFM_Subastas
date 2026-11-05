@@ -18,9 +18,19 @@ test("toNumber convierte Decimal, string y number", () => {
   assert.equal(toNumber(750000), 750000);
 });
 
+test("toNumber conserva NaN para entradas numéricas inválidas", () => {
+  assert.equal(Number.isNaN(toNumber("no-es-un-número")), true);
+  assert.equal(Number.isNaN(toNumber(decimal(Number.NaN))), true);
+});
+
 test("toISO convierte Date a ISO string", () => {
   assert.equal(toISO(date), "2026-08-03T12:00:00.000Z");
   assert.equal(toISO("2026-08-03T12:00:00.000Z"), "2026-08-03T12:00:00.000Z");
+});
+
+test("toISO rechaza fechas inválidas", () => {
+  assert.throws(() => toISO(new Date("fecha-inválida")), RangeError);
+  assert.throws(() => toISO(Number.NaN), RangeError);
 });
 
 test("serializeBid produce objeto 100% plano (sin Decimal ni Date)", () => {
@@ -88,6 +98,42 @@ test("serializeAsset devuelve null si no hay asset", () => {
   assert.equal(serializeAsset(undefined), null);
 });
 
+test("serializeAsset normaliza relaciones nulas y serializa bids recursivamente", () => {
+  const asset = serializeAsset({
+    id: "a2",
+    description: "Lote sin relaciones",
+    basePrice: "1000000",
+    currentPrice: decimal(1050000),
+    status: "ACTIVO",
+    approvalStatus: "APROBADO",
+    createdAt: date,
+    updatedAt: date,
+    martilleroId: "m2",
+    martillero: null,
+    approvedBy: null,
+    _count: null,
+    bids: [{
+      id: "b-recursiva",
+      amount: decimal(1050000),
+      createdAt: date,
+      isWinning: true,
+      userId: "u2",
+      assetId: "a2",
+      user: null,
+    }],
+  });
+
+  assert.ok(asset);
+  assert.equal(asset.imageUrl, null);
+  assert.equal(asset.approvedById, null);
+  assert.equal(asset.martillero, null);
+  assert.equal(asset.approvedBy, null);
+  assert.equal(asset._count, null);
+  assert.equal(asset.bids[0].amount, 1050000);
+  assert.equal(asset.bids[0].createdAt, "2026-08-03T12:00:00.000Z");
+  assert.equal(asset.bids[0].user, null);
+});
+
 test("serializeGuarantee aplaniza amount y paymentDate", () => {
   const g = serializeGuarantee({
     id: "g1",
@@ -112,4 +158,24 @@ test("serializeGuarantee aplaniza amount y paymentDate", () => {
 
 test("serializeGuarantee devuelve null si no hay garantía", () => {
   assert.equal(serializeGuarantee(null), null);
+});
+
+test("serializeGuarantee normaliza relaciones y opcionales nulos", () => {
+  const guarantee = serializeGuarantee({
+    id: "g2",
+    userId: "u2",
+    isPaid: false,
+    amount: "500000",
+    createdAt: date,
+    paymentDate: null,
+    asset: null,
+    user: null,
+  });
+
+  assert.ok(guarantee);
+  assert.equal(guarantee.assetId, null);
+  assert.equal(guarantee.paymentDate, null);
+  assert.equal(guarantee.paymentMethod, null);
+  assert.equal(guarantee.asset, null);
+  assert.equal(guarantee.user, null);
 });

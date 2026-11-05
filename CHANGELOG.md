@@ -9,6 +9,22 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 
 
+## [0.16.6] - 2026-11-05
+
+### Added
+- Cobertura del motor de remates para garantía por lote, monto e incremento mínimo, rollback, bloqueo `FOR UPDATE`, permisos, ganador, estados `ADJUDICADO`/`DESIERTO` e idempotencia.
+- Cobertura de las acciones de pujas, cierre y garantías, incluyendo validaciones, errores, permisos y serialización RSC.
+- Casos límite de serialización para fechas inválidas, `NaN`, relaciones nulas y relaciones anidadas.
+
+### Changed
+- `pnpm test` descubre toda la suite `src/**/*.test.ts` mediante el cargador TypeScript de `tsx` y habilita mocks ESM nativos de Node.js.
+- `vercel.json`: el despliegue ejecuta `pnpm db:migrate:deploy` antes de `pnpm build`, sin ejecutar el seed, y aplica CSP, `X-Content-Type-Options`, `Referrer-Policy` y `Permissions-Policy` en todas las rutas.
+- `next.config.ts`: verificado que la detección automática de Next.js en Vercel y los patrones remotos existentes cubren la configuración requerida; no se agregan overrides de runtime ni output.
+- `package.json`: versión `0.16.5` → `0.16.6`.
+
+### Fixed
+- `storeUpload()` ya no intenta escribir en `public/uploads` cuando falta `BLOB_READ_WRITE_TOKEN` en producción: ahora falla explícitamente y conserva el fallback únicamente para desarrollo local.
+
 ## [0.16.5] - 2026-10-12
 
 ### Added

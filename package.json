@@ -1,6 +1,6 @@
 {
   "name": "remates-tfm",
-  "version": "0.16.5",
+  "version": "0.16.6",
   "private": true,
   "description": "Plataforma de remates de vehículos y especies de alto rendimiento",
   "scripts": {
@@ -10,7 +10,7 @@
     "start": "next start",
     "postinstall": "prisma generate",
     "lint": "eslint src/",
-    "test": "tsx --test src/lib/serialize.test.ts",
+    "test": "node --experimental-test-module-mocks --import tsx --test \"src/**/*.test.ts\"",
     "check": "tsc --noEmit && eslint src/",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",

@@ -92,7 +92,10 @@ export async function closeAuctionAction(
 }
 
 export async function getBidsByAssetAction(assetId: string) {
-  return engineGetBidsByAsset(assetId);
+  return serializeBids(await engineGetBidsByAsset(assetId)).map((bid) => ({
+    ...bid,
+    user: bid.user!,
+  }));
 }
 
 export async function getLatestBidsAction(assetId: string, limit = 5) {
@@ -100,5 +103,6 @@ export async function getLatestBidsAction(assetId: string, limit = 5) {
 }
 
 export async function getWinningBidAction(assetId: string) {
-  return engineGetWinningBid(assetId);
+  const bid = await engineGetWinningBid(assetId);
+  return bid ? serializeBid(bid) : null;
 }

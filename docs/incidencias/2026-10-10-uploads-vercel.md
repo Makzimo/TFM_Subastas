@@ -45,7 +45,8 @@ Los roles `ADMINISTRATIVO` y `MARTILLERO` no podrán subir imágenes de activos 
 ### Implementación
 - `src/lib/uploads.ts` — nueva abstracción `storeUpload({ buffer, contentType, originalName })`:
   - Si existe `BLOB_READ_WRITE_TOKEN` → `put()` de `@vercel/blob` con `access: "public"`, clave única en `activos/<ISO8601>-<random>.<ext>` y `allowOverwrite: false`.
-  - Sin token (desarrollo local) → escribe en `public/uploads`, para no exigir infraestructura adicional en local.
+  - Sin token en desarrollo local → escribe en `public/uploads`, para no exigir infraestructura adicional en local.
+  - Sin token en producción → falla explícitamente antes de intentar escribir en el filesystem de solo lectura de Vercel.
   - Devuelve `{ url, pathname, storage }`; la ruta persiste solo `url` en `Asset.imageUrl`.
 - `src/app/api/uploads/route.ts` — delega el almacenamiento en `storeUpload()`; mantiene autorización (solo `ADMINISTRATIVO`/`MARTILLERO`), MIME allow-list (`image/jpeg|png|webp`), límite de 5 MB y manejo de errores con `console.error`.
 - `next.config.ts` — `images.remotePatterns` ampliado con `**.public.blob.vercel-storage.com` (requerido porque `AssetCard` usa `next/image`).
@@ -55,7 +56,7 @@ Los roles `ADMINISTRATIVO` y `MARTILLERO` no podrán subir imágenes de activos 
 Ninguno rompe. `Asset.imageUrl` sigue siendo un `string` y los tres formularios que llaman a `/api/uploads` (`admin/activos/nuevo`, `admin/activos/[id]/edit-form`, `martillero/activos/nuevo`) consumen `res.json().url` sin cambios. Las URLs absolutas de Blob funcionan igual en `<img src>` y en `next/image`.
 
 ### Acción pendiente sobre infraestructura
-Crear el store de Blob en el panel de Vercel (→ *Storage* → *Blob*) y añadir `BLOB_READ_WRITE_TOKEN` al entorno. Sin esa variable, la app sigue funcionando pero en modo local (`public/uploads`), que en Vercel **fallará** al escribir.
+Crear el store de Blob en el panel de Vercel (→ *Storage* → *Blob*) y añadir `BLOB_READ_WRITE_TOKEN` al entorno. Sin esa variable, las subidas fallan de forma explícita en producción; el fallback `public/uploads` queda limitado al desarrollo local.
 
 ## Recomendación
 Aplicar **Opción A (Vercel Blob)** antes del go-live si la subida de imágenes es parte del alcance del lanzamiento. Si no es crítica para el primer lanzamiento, aplicar Opción C y agendar.

@@ -252,7 +252,17 @@ export async function getAssetsAction(params?: {
   status?: AuctionStatus;
   search?: string;
 }) {
-  return engineGetAssets(params);
+  const assets = await engineGetAssets(params);
+  return assets.map((asset) => {
+    const serialized = serializeAsset(asset)!;
+    return {
+      ...serialized,
+      status: asset.status,
+      approvalStatus: asset.approvalStatus,
+      martillero: serialized.martillero!,
+      _count: serialized._count!,
+    };
+  });
 }
 
 export async function getAssetsWithApprovalAction(params?: {
@@ -275,7 +285,7 @@ export async function getAssetsWithApprovalAction(params?: {
     where.description = { contains: params.search, mode: "insensitive" };
   }
 
-  return prisma.asset.findMany({
+  const assets = await prisma.asset.findMany({
     where,
     orderBy: { createdAt: "desc" },
     include: {
@@ -283,6 +293,17 @@ export async function getAssetsWithApprovalAction(params?: {
       approvedBy: { select: { id: true, name: true, email: true } },
       _count: { select: { bids: true } },
     },
+  });
+
+  return assets.map((asset) => {
+    const serialized = serializeAsset(asset)!;
+    return {
+      ...serialized,
+      status: asset.status,
+      approvalStatus: asset.approvalStatus,
+      martillero: serialized.martillero!,
+      _count: serialized._count!,
+    };
   });
 }
 

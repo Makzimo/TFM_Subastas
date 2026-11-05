@@ -71,9 +71,10 @@ export async function createGuaranteeAction(
 export async function getMyGuaranteeForAssetAction(assetId: string) {
   try {
     const user = await getActiveUser();
-    return prisma.bidderGuarantee.findFirst({
+    const guarantee = await prisma.bidderGuarantee.findFirst({
       where: { userId: user.id, assetId },
     });
+    return serializeGuarantee(guarantee);
   } catch {
     return null;
   }
@@ -100,13 +101,22 @@ export async function getMyGuaranteesAction() {
 export async function getAllGuaranteesAction() {
   await getActiveUser(["ADMINISTRATIVO"]);
 
-  return prisma.bidderGuarantee.findMany({
+  const guarantees = await prisma.bidderGuarantee.findMany({
     include: {
       user: { select: { id: true, name: true, email: true } },
       asset: { select: { id: true, description: true } },
     },
     orderBy: { createdAt: "desc" },
   });
+
+  return guarantees
+    .map(serializeGuarantee)
+    .filter((guarantee) => guarantee !== null)
+    .map((guarantee) => ({
+      ...guarantee,
+      user: guarantee.user!,
+      paymentDate: guarantee.paymentDate as (string & Date) | null,
+    }));
 }
 
 export async function updateGuaranteeStatusAction(

@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Vercel detecta Next.js y no requiere output ni runtime personalizados.
   allowedDevOrigins: ["*"],
   images: {
     remotePatterns: [

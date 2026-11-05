@@ -75,6 +75,12 @@ export async function storeUpload({
     return { url: blob.url, pathname: blob.pathname, storage: "blob" };
   }
 
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "BLOB_READ_WRITE_TOKEN es obligatoria para almacenar archivos en producción"
+    );
+  }
+
   await mkdir(LOCAL_DIR, { recursive: true });
   await writeFile(join(LOCAL_DIR, pathname.replace(`${BLOB_PREFIX}/`, "")), buffer);
   return { url: `/uploads/${pathname.replace(`${BLOB_PREFIX}/`, "")}`, pathname, storage: "local" };

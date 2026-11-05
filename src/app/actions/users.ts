@@ -14,6 +14,63 @@ interface ActionResult<T = unknown> {
 
 const VALID_ROLES: Role[] = ["MARTILLERO", "POSTOR", "ADMINISTRATIVO"];
 
+interface SerializableUser {
+  id: string;
+  email: string;
+  name: string | null;
+  role: Role;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _count?: { assets: number };
+}
+
+interface SerializableUserWithCount extends SerializableUser {
+  _count: { assets: number };
+}
+
+function serializeUser(user: {
+  id: string;
+  email: string;
+  name: string | null;
+  role: Role;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  _count: { assets: number };
+}): SerializableUserWithCount;
+function serializeUser(user: {
+  id: string;
+  email: string;
+  name: string | null;
+  role: Role;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  _count?: { assets: number };
+}): SerializableUser;
+function serializeUser(user: {
+  id: string;
+  email: string;
+  name: string | null;
+  role: Role;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  _count?: { assets: number };
+}): SerializableUser {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    isActive: user.isActive,
+    createdAt: user.createdAt.toISOString(),
+    updatedAt: user.updatedAt.toISOString(),
+    ...(user._count ? { _count: user._count } : {}),
+  };
+}
+
 async function requireActiveAdmin() {
   return getActiveUser(["ADMINISTRATIVO"]);
 }
@@ -74,7 +131,7 @@ export async function createMartilleroAction(
       details: { email: martillero.email, name: martillero.name },
     });
 
-    return { success: true, data: martillero };
+    return { success: true, data: serializeUser(martillero) };
   } catch (error) {
     return {
       success: false,
@@ -105,7 +162,7 @@ export async function createUserAction(
       details: { email: user.email, name: user.name, role },
     });
 
-    return { success: true, data: user };
+    return { success: true, data: serializeUser(user) };
   } catch (error) {
     return {
       success: false,
@@ -117,24 +174,28 @@ export async function createUserAction(
 export async function getMartillerosAction() {
   await requireActiveAdmin();
 
-  return prisma.user.findMany({
+  const martilleros = await prisma.user.findMany({
     where: { role: "MARTILLERO" },
     orderBy: { createdAt: "desc" },
     include: {
       _count: { select: { assets: true } },
     },
   });
+
+  return martilleros.map((martillero) => serializeUser(martillero));
 }
 
 export async function getAllUsersAction() {
   await requireActiveAdmin();
 
-  return prisma.user.findMany({
+  const users = await prisma.user.findMany({
     orderBy: { createdAt: "desc" },
     include: {
       _count: { select: { assets: true } },
     },
   });
+
+  return users.map((user) => serializeUser(user));
 }
 
 export async function updateUserRoleAction(
@@ -169,7 +230,7 @@ export async function updateUserRoleAction(
       details: { from: target.role, to: role, email: target.email },
     });
 
-    return { success: true, data: updated };
+    return { success: true, data: serializeUser(updated) };
   } catch (error) {
     return {
       success: false,
@@ -206,7 +267,7 @@ export async function setUserActiveAction(
       details: { email: target.email, isActive },
     });
 
-    return { success: true, data: updated };
+    return { success: true, data: serializeUser(updated) };
   } catch (error) {
     return {
       success: false,
